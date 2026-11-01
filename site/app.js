@@ -257,7 +257,7 @@
     }
 
     // Busca clima atual + previsão diária para os próximos 4 dias
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`)
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`)
       .then((r) => r.json())
       .then((data) => {
         if (data && data.current_weather) {
@@ -280,6 +280,7 @@
                 diaSemana: SEMANA[dt.getDay()],
                 max: Math.round(data.daily.temperature_2m_max[idx]),
                 min: Math.round(data.daily.temperature_2m_min[idx]),
+                probChuva: Array.isArray(data.daily.precipitation_probability_max) ? data.daily.precipitation_probability_max[idx] : null,
                 desc: wmo.desc,
                 icon: wmo.icon,
               };
@@ -308,9 +309,12 @@
               <span class="previsao-dia-desc">${d.desc}</span>
             </div>
           </div>
-          <div class="previsao-dia-temps">
-            <span class="temp-max" title="Máxima">▲ ${d.max}°</span>
-            <span class="temp-min" title="Mínima">▼ ${d.min}°</span>
+          <div class="previsao-dia-direita">
+            ${d.probChuva !== null && d.probChuva !== undefined ? `<span class="previsao-dia-chuva ${d.probChuva >= 40 ? 'chuva-alta' : ''}" title="Probabilidade de chuva">💧 ${d.probChuva}%</span>` : ''}
+            <div class="previsao-dia-temps">
+              <span class="temp-max" title="Máxima">▲ ${d.max}°</span>
+              <span class="temp-min" title="Mínima">▼ ${d.min}°</span>
+            </div>
           </div>
         </div>
       `)
