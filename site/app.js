@@ -209,6 +209,65 @@
     }, DURACAO_BOAS_VINDAS);
   }
 
+  // ---------------- clima da regional ----------------
+  const CIDADES_REGIONAL = {
+    df: { lat: -15.7975, lon: -47.8919, nome: "Brasília/DF" },
+    go: { lat: -16.6869, lon: -49.2648, nome: "Goiânia/GO" },
+    anp: { lat: -16.3268, lon: -48.9534, nome: "Anápolis/GO" },
+    mt: { lat: -15.6014, lon: -56.0979, nome: "Cuiabá/MT" },
+    sinop: { lat: -11.8608, lon: -55.5095, nome: "Sinop/MT" },
+    to: { lat: -10.1844, lon: -48.3336, nome: "Palmas/TO" },
+  };
+
+  function climaDescPorWmo(codigo) {
+    if (codigo === 0) return { desc: "Ensolarado", icon: "☀️" };
+    if (codigo === 1 || codigo === 2) return { desc: "Parcialmente nublado", icon: "⛅" };
+    if (codigo === 3) return { desc: "Nublado", icon: "☁️" };
+    if (codigo >= 45 && codigo <= 48) return { desc: "Nevoeiro", icon: "🌫️" };
+    if (codigo >= 51 && codigo <= 67) return { desc: "Chuva fraca", icon: "🌦️" };
+    if (codigo >= 80 && codigo <= 82) return { desc: "Pancadas de chuva", icon: "🌧️" };
+    if (codigo >= 95) return { desc: "Trovoadas", icon: "⛈️" };
+    return { desc: "Tempo bom", icon: "🌤️" };
+  }
+
+  function carregarClimaRegional(loja) {
+    const nome = (loja && (loja.nome || "")).toUpperCase();
+    let reg = CIDADES_REGIONAL.df;
+    if (nome.includes("ANP/")) reg = CIDADES_REGIONAL.anp;
+    else if (nome.includes("/GO") || nome.includes("GOI/")) reg = CIDADES_REGIONAL.go;
+    else if (nome.includes("SINOP")) reg = CIDADES_REGIONAL.sinop;
+    else if (nome.includes("-MT") || nome.includes("CUIABA")) reg = CIDADES_REGIONAL.mt;
+    else if (nome.includes("/TO") || nome.includes("DOURADO")) reg = CIDADES_REGIONAL.to;
+
+    const elIcon = $("clima-icone");
+    const elTemp = $("clima-temp");
+    const elDesc = $("clima-desc");
+    if (!elTemp) return;
+
+    // Valor prévio de estimativa
+    const hora = new Date().getHours();
+    const tempEstimada = hora >= 11 && hora <= 16 ? 30 : 25;
+    elTemp.textContent = `${tempEstimada}°C`;
+    elDesc.textContent = reg.nome;
+    if (elIcon) elIcon.textContent = hora >= 6 && hora <= 18 ? "☀️" : "🌙";
+
+    // API pública direta sem chave estática no repositório (Open-Meteo com dados do Inmet/NOAA)
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current_weather=true`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.current_weather) {
+          const t = Math.round(data.current_weather.temperature);
+          const wmo = climaDescPorWmo(data.current_weather.weathercode);
+          elTemp.textContent = `${t}°C`;
+          elDesc.textContent = `${reg.nome} • ${wmo.desc}`;
+          if (elIcon) elIcon.textContent = wmo.icon;
+        }
+      })
+      .catch(() => {
+        elDesc.textContent = reg.nome;
+      });
+  }
+
   // ---------------- dashboard ----------------
   function diaDeHoje() {
     const hoje = new Date();
@@ -297,6 +356,7 @@
     diaSelecionado = hoje || rankDias("total")[0].dia;
     montarCalendario();
     montarTopDias();
+    carregarClimaRegional(l);
     ativarRevealAoRolar();
 
     const gerado = new Date(DADOS.geradoEm);

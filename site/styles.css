@@ -627,6 +627,41 @@ input,
   outline: none;
   border-color: var(--vermelho-vivo);
 }
+
+/* Clima simples no topo */
+.topo-clima {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg2);
+  border: 1px solid var(--borda-forte);
+  padding: 0.3rem 0.65rem;
+  border-radius: 7px;
+  cursor: default;
+  user-select: none;
+}
+.clima-icone {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.clima-dados {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.clima-temp {
+  font-family: var(--fonte-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--verde-vivo);
+}
+.clima-desc {
+  font-size: 0.64rem;
+  color: var(--texto2);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
 .topo-info {
   margin-left: auto;
   text-align: right;
@@ -1456,14 +1491,28 @@ input,
     font-size: 0.82rem;
     max-width: 120px;
   }
-  .btn-sair {
+  .topo-clima {
     order: 3;
+    padding: 0.25rem 0.5rem;
+    gap: 0.35rem;
+  }
+  .clima-icone {
+    font-size: 0.95rem;
+  }
+  .clima-temp {
+    font-size: 0.76rem;
+  }
+  .clima-desc {
+    display: none;
+  }
+  .btn-sair {
+    order: 4;
     padding: 0.4rem 0.7rem;
     font-size: 0.76rem;
     min-height: 34px;
   }
   .topo-troca-loja {
-    order: 4;
+    order: 5;
     width: 100%;
     margin-left: 0;
     padding: 0.35rem 0.6rem;
