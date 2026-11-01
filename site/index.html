@@ -2,9 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Meta Lojas — Águia do Cerrado</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
@@ -24,8 +28,13 @@
       <p class="sub">Regional <b>Águia do Cerrado</b> (Romulo Farias) — selecione sua unidade para consultar as metas.</p>
 
       <form id="form-login" autocomplete="off">
-        <label for="campo-loja">Unidade / Loja (Águia do Cerrado)</label>
-        <input id="campo-loja" list="lista-lojas" placeholder="Digite o código (ex: 23, 25, 99) ou escolha na lista" required />
+        <label for="select-loja-login">Selecionar Loja na Lista</label>
+        <select id="select-loja-login" class="select-login-mobile">
+          <option value="">Toque para escolher sua unidade...</option>
+        </select>
+
+        <label for="campo-loja">Ou pesquise por código / nome</label>
+        <input id="campo-loja" list="lista-lojas" inputmode="search" placeholder="Ex: 23, 25, 99 ou nome da loja" required />
         <datalist id="lista-lojas"></datalist>
 
         <label for="campo-nome">Seu nome</label>
@@ -96,6 +105,7 @@
   <!-- ============ DASHBOARD ============ -->
   <section id="tela-dashboard" class="tela">
     <header class="topo">
+      <div id="barra-scroll-topo" class="barra-scroll-topo"></div>
       <div class="logo pequeno">
         <img src="favicon.svg" alt="Meta Lojas" class="logo-icone-svg" />
         <span>META<b>LOJAS</b></span>
@@ -115,7 +125,7 @@
 
     <main class="conteudo">
       <!-- Meta do mês + Hoje por setor + Prévia do próximo dia -->
-      <section class="card hero">
+      <section id="secao-hero" class="card hero reveal-on-scroll">
         <div class="hero-topo">
           <div class="hero-principal">
             <div class="hero-cabecalho">
@@ -137,7 +147,7 @@
               <p id="meta-amanha" class="valor-mini"></p>
               <small id="sub-amanha" class="mini-sub"></small>
             </div>
-            <div class="mini">
+            <div class="mini mini-periodo">
               <p class="rotulo">Período / Ritmo</p>
               <p id="dias-restantes" class="valor-mini"></p>
               <small id="sub-periodo" class="mini-sub">Dias restantes no mês</small>
@@ -167,18 +177,18 @@
       </section>
 
       <!-- Metas por setor -->
-      <div class="secao-header">
+      <div id="secao-setores" class="secao-header reveal-on-scroll">
         <h2 class="titulo-secao">Distribuição por Setor</h2>
-        <span class="secao-sub">Participação de cada categoria na meta total</span>
+        <span class="secao-sub">Toque em um setor para filtrar o calendário</span>
       </div>
-      <section id="setores" class="grid-setores"></section>
+      <section id="setores" class="grid-setores reveal-on-scroll"></section>
 
       <!-- Calendário + termômetro -->
-      <div class="secao-header">
+      <div id="secao-calendario" class="secao-header reveal-on-scroll">
         <h2 class="titulo-secao">Mapa Diário de Metas</h2>
-        <span class="secao-sub">Clique em um dia para inspecionar os detalhes por categoria</span>
+        <span class="secao-sub">Toque ou deslize o dedo pelos dias para inspecionar</span>
       </div>
-      <section class="card calendario-card">
+      <section class="card calendario-card reveal-on-scroll">
         <div class="abas" id="abas-calendario"></div>
 
         <div class="calendario-layout">
@@ -188,13 +198,13 @@
             </div>
             <div id="dias" class="dias"></div>
             <div class="legenda">
-              <span>Ritmo base (Verde)</span>
+              <span>Base (Verde)</span>
               <div class="legenda-gradiente"></div>
-              <span>Pico de meta (Vermelho)</span>
+              <span>Pico (Vermelho)</span>
             </div>
           </div>
 
-          <aside class="termometro-area">
+          <aside id="painel-detalhe-dia" class="termometro-area">
             <div class="termometro">
               <span id="termo-max" class="termo-label topo-label"></span>
               <div class="tubo"><div id="termo-fill" class="tubo-fill"></div></div>
@@ -202,24 +212,49 @@
               <span id="termo-min" class="termo-label base-label"></span>
             </div>
             <div class="detalhe-dia">
-              <p class="rotulo" id="detalhe-data"></p>
+              <div class="detalhe-navegacao">
+                <button type="button" id="btn-dia-ant" class="btn-nav-dia" aria-label="Dia anterior">‹ Ant</button>
+                <p class="rotulo" id="detalhe-data"></p>
+                <button type="button" id="btn-dia-prox" class="btn-nav-dia" aria-label="Próximo dia">Próx ›</button>
+              </div>
               <p id="detalhe-valor" class="valor-mini valor-detalhe"></p>
               <p id="detalhe-rank" class="sub badge-rank"></p>
               <ul id="detalhe-setores" class="detalhe-setores"></ul>
+              <span class="dica-swipe-mobile">↔ Deslize para trocar de dia</span>
             </div>
           </aside>
         </div>
       </section>
 
       <!-- Top dias -->
-      <div class="secao-header">
+      <div id="secao-top" class="secao-header reveal-on-scroll">
         <h2 class="titulo-secao">Top 5 Maiores Metas do Mês</h2>
         <span class="secao-sub">Dias decisivos de maior volume projetado</span>
       </div>
-      <section id="top-dias" class="top-dias"></section>
+      <section id="top-dias" class="top-dias reveal-on-scroll"></section>
 
       <p id="rodape" class="rodape"></p>
     </main>
+
+    <!-- Barra de navegação inferior exclusiva Mobile (Thumb Zone) -->
+    <nav class="nav-mobile" aria-label="Navegação rápida mobile">
+      <button type="button" class="nav-mobile-btn ativo" data-alvo="secao-hero">
+        <span class="nav-icone">🎯</span>
+        <span>Hoje</span>
+      </button>
+      <button type="button" class="nav-mobile-btn" data-alvo="secao-setores">
+        <span class="nav-icone">⚡</span>
+        <span>Setores</span>
+      </button>
+      <button type="button" class="nav-mobile-btn" data-alvo="secao-calendario">
+        <span class="nav-icone">📅</span>
+        <span>Calendário</span>
+      </button>
+      <button type="button" class="nav-mobile-btn" data-alvo="secao-top">
+        <span class="nav-icone">🔥</span>
+        <span>Top 5</span>
+      </button>
+    </nav>
   </section>
 
   <script src="data.js"></script>

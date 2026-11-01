@@ -4,7 +4,7 @@
   const DADOS = window.METAS;
   const CHAVE_SESSAO = "metaLojas.sessao";
   const CHAVE_NOME = "metaLojas.nome";
-  const DURACAO_BOAS_VINDAS = 3400; // ms
+  const DURACAO_BOAS_VINDAS = 3200; // ms
   const NOME_REGIONAL_FIXA = "Águia do Cerrado • Romulo Farias";
 
   // Filtra apenas lojas da Regional Águia do Cerrado (Romulo Farias)
@@ -30,20 +30,37 @@
   const brlCompacto = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
   const pct = (v) => `${(v * 100).toFixed(1).replace(".", ",")}%`;
 
+  // Formato enxuto para caber perfeitamente nas células do calendário mobile (ex: 36k, 1,2M)
+  function fmtCalCurto(v) {
+    if (!v || v <= 0) return "—";
+    if (v >= 1000000) return `${(v / 1000000).toFixed(1).replace(".", ",")}M`;
+    if (v >= 1000) return `${Math.round(v / 1000)}k`;
+    return String(Math.round(v));
+  }
+
+  function vibrarLeve(ms = 10) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(ms);
+    } catch (_) {
+      // Ignora em dispositivos sem suporte
+    }
+  }
+
   let lojaAtual = null;
   let setorCalendario = "total";
   let diaSelecionado = 1;
+  let scrollObserver = null;
 
   // ---------------- navegação ----------------
   function mostrarTela(id) {
     document.querySelectorAll(".tela").forEach((t) => t.classList.toggle("ativa", t.id === id));
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
   }
 
   const rotuloLoja = (l) => l.nome || `Loja ${l.codigo}`;
 
   function acharLoja(texto) {
-    const t = texto.trim().toLowerCase();
+    const t = String(texto || "").trim().toLowerCase();
     if (!t) return null;
     return (
       DADOS.lojas.find((l) => rotuloLoja(l).toLowerCase() === t) ||
@@ -58,14 +75,38 @@
       .map((l) => `<option value="${rotuloLoja(l).replace(/"/g, "&quot;")}"></option>`)
       .join("");
 
-    $("seletor-loja-topo").innerHTML = DADOS.lojas
+    const opcoesSelect = DADOS.lojas
       .map((l) => `<option value="${l.codigo}">${rotuloLoja(l)}</option>`)
       .join("");
+
+    $("seletor-loja-topo").innerHTML = opcoesSelect;
+
+    const selectLogin = $("select-loja-login");
+    if (selectLogin) {
+      selectLogin.innerHTML = `<option value="">Toque para escolher sua unidade...</option>` + opcoesSelect;
+      selectLogin.addEventListener("change", (e) => {
+        const cod = Number(e.target.value);
+        const loja = DADOS.lojas.find((l) => l.codigo === cod);
+        if (loja) {
+          $("campo-loja").value = rotuloLoja(loja);
+          $("erro-login").hidden = true;
+          vibrarLeve(12);
+        }
+      });
+    }
+
+    $("campo-loja").addEventListener("input", (e) => {
+      const loja = acharLoja(e.target.value);
+      if (selectLogin) {
+        selectLogin.value = loja ? String(loja.codigo) : "";
+      }
+    });
 
     $("seletor-loja-topo").addEventListener("change", (e) => {
       const novoCodigo = Number(e.target.value);
       const novaLoja = DADOS.lojas.find((l) => l.codigo === novoCodigo);
       if (!novaLoja) return;
+      vibrarLeve(15);
       lojaAtual = novaLoja;
       const nomeSalvo = localStorage.getItem(CHAVE_NOME) || $("topo-ola").textContent || "Visitante";
       const sessao = { codigo: novaLoja.codigo, nome: nomeSalvo };
@@ -78,21 +119,25 @@
 
     $("form-login").addEventListener("submit", (e) => {
       e.preventDefault();
-      const loja = acharLoja($("campo-loja").value);
+      const valorCampo = $("campo-loja").value || (selectLogin ? selectLogin.value : "");
+      const loja = acharLoja(valorCampo);
       const nome = $("campo-nome").value.trim();
       const erro = $("erro-login");
 
       if (!loja) {
-        erro.textContent = "Loja não encontrada. Escolha uma opção da lista.";
+        erro.textContent = "Unidade não encontrada. Selecione na lista acima ou digite o código.";
         erro.hidden = false;
+        vibrarLeve(30);
         return;
       }
       if (!nome) {
-        erro.textContent = "Informe seu nome.";
+        erro.textContent = "Informe seu nome para continuar.";
         erro.hidden = false;
+        vibrarLeve(30);
         return;
       }
       erro.hidden = true;
+      vibrarLeve(18);
       const nomeFormatado = capitalizar(nome);
       const sessao = { codigo: loja.codigo, nome: nomeFormatado };
       localStorage.setItem(CHAVE_NOME, nomeFormatado);
@@ -101,11 +146,12 @@
     });
 
     $("btn-sair").addEventListener("click", () => {
+      vibrarLeve(12);
       localStorage.removeItem(CHAVE_SESSAO);
       $("campo-nome").value = localStorage.getItem(CHAVE_NOME) || "";
       $("campo-loja").value = "";
+      if (selectLogin) selectLogin.value = "";
       mostrarTela("tela-login");
-      $("campo-loja").focus();
     });
   }
 
@@ -159,6 +205,7 @@
     setTimeout(() => {
       montarDashboard(sessao);
       mostrarTela("tela-dashboard");
+      ativarRevealAoRolar();
     }, DURACAO_BOAS_VINDAS);
   }
 
@@ -174,13 +221,13 @@
     }
     const totalDia = lojaAtual.diario.total[dia - 1] || 1;
     return Object.keys(DADOS.setores)
-      .map((k) => {
+      .map((k, idx) => {
         const info = SETOR_INFO[k];
         const val = lojaAtual.diario[k][dia - 1] || 0;
         const p = totalDia > 0 ? val / totalDia : 0;
         const semMeta = lojaAtual.meta[k] <= 0 && val <= 0;
         return `
-          <div class="hero-setor-item ${semMeta ? "vazio" : ""}" style="--cor-setor:${info.cor}">
+          <div class="hero-setor-item ${semMeta ? "vazio" : ""}" style="--cor-setor:${info.cor};--stagger:${idx * 55}ms">
             <div class="hero-setor-topo">
               <span class="hero-setor-sigla" style="color:${info.cor};border-color:${info.cor}44;background:${info.cor}14">${info.sigla}</span>
               <span class="hero-setor-nome">${info.rotulo}</span>
@@ -212,7 +259,7 @@
 
     $("rotulo-hoje").textContent = hoje ? `Meta de hoje (${diaBaseFmt})` : `Meta Dia ${diaBaseFmt}`;
     $("meta-hoje").textContent = brl.format(valorHoje);
-    $("sub-hoje").textContent = `${SEMANA[dataBase.getDay()]} • ${pct(valorHoje / (l.meta.total || 1))} da meta do mês`;
+    $("sub-hoje").textContent = `${SEMANA[dataBase.getDay()]} • ${pct(valorHoje / (l.meta.total || 1))} do mês`;
 
     if (proxDia) {
       const valorAmanha = l.diario.total[proxDia - 1] || 0;
@@ -224,15 +271,15 @@
       $("rotulo-amanha").textContent = `Prévia amanhã (${proxDiaFmt})`;
       $("meta-amanha").textContent = brl.format(valorAmanha);
       $("sub-amanha").textContent = `${SEMANA[dataProx.getDay()]} • ${sinal} vs hoje`;
-      $("titulo-setores-amanha").textContent = `PRÉVIA DE AMANHÃ POR SETOR • ${proxDiaFmt} (${SEMANA[dataProx.getDay()].toUpperCase()})`;
+      $("titulo-setores-amanha").textContent = `PRÉVIA AMANHÃ • ${proxDiaFmt} (${SEMANA[dataProx.getDay()].toUpperCase()})`;
     } else {
       $("rotulo-amanha").textContent = "Próximo dia";
       $("meta-amanha").textContent = "Fim do mês";
-      $("sub-amanha").textContent = "Último dia do calendário mensal";
+      $("sub-amanha").textContent = "Último dia do calendário";
       $("titulo-setores-amanha").textContent = "PRÉVIA DO PRÓXIMO DIA";
     }
 
-    $("titulo-setores-hoje").textContent = `META DE HOJE POR SETOR • ${diaBaseFmt} (${SEMANA[dataBase.getDay()].toUpperCase()})`;
+    $("titulo-setores-hoje").textContent = `META DE HOJE • ${diaBaseFmt} (${SEMANA[dataBase.getDay()].toUpperCase()})`;
     $("hero-setores-hoje").innerHTML = renderSetoresDia(diaBase);
     $("hero-setores-amanha").innerHTML = renderSetoresDia(proxDia);
 
@@ -250,6 +297,7 @@
     diaSelecionado = hoje || rankDias("total")[0].dia;
     montarCalendario();
     montarTopDias();
+    ativarRevealAoRolar();
 
     const gerado = new Date(DADOS.geradoEm);
     $("rodape").textContent = `Dados atualizados em ${gerado.toLocaleDateString("pt-BR")} às ${gerado.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
@@ -258,20 +306,21 @@
   function montarSetores() {
     const total = lojaAtual.meta.total || 1;
     $("setores").innerHTML = Object.keys(DADOS.setores)
-      .map((k) => {
+      .map((k, idx) => {
         const info = SETOR_INFO[k];
         const v = lojaAtual.meta[k] || 0;
         const p = v / total;
+        const larguraPct = (p * 100).toFixed(1);
         return `
-          <article class="card setor ${v ? "" : "vazio"}" style="--cor-setor:${info.cor}" data-setor="${k}">
+          <article class="card setor reveal-card ${v ? "" : "vazio"}" style="--cor-setor:${info.cor};--stagger:${idx * 70}ms;--largura-barra:${larguraPct}%" data-setor="${k}">
             <div class="setor-topo">
               <span class="setor-tag" style="color:${info.cor};border-color:${info.cor}44;background:${info.cor}14">${info.sigla}</span>
               <span class="setor-share">${v ? pct(p) : "0,0%"}</span>
             </div>
             <h3>${info.rotulo}</h3>
             <p class="valor">${v ? brl.format(v) : "Sem meta"}</p>
-            <p class="pct">${v ? "Participação na meta mensal" : "Sem meta alocada no período"}</p>
-            <div class="barrinha"><div style="width:${(p * 100).toFixed(1)}%;background:${info.cor}"></div></div>
+            <p class="pct">${v ? "Toque para ver no calendário →" : "Sem meta alocada no período"}</p>
+            <div class="barrinha"><div style="width:${larguraPct}%;background:${info.cor}"></div></div>
           </article>`;
       })
       .join("");
@@ -279,11 +328,12 @@
     $("setores").onclick = (e) => {
       const card = e.target.closest(".setor[data-setor]:not(.vazio)");
       if (!card) return;
+      vibrarLeve(15);
       const k = card.dataset.setor;
       const btn = document.querySelector(`.aba[data-setor="${k}"]`);
       if (btn) {
         btn.click();
-        document.querySelector(".calendario-card").scrollIntoView({ behavior: "smooth", block: "center" });
+        document.querySelector(".calendario-card").scrollIntoView({ behavior: "smooth", block: "start" });
       }
     };
   }
@@ -296,8 +346,10 @@
     $("abas-calendario").onclick = (e) => {
       const btn = e.target.closest(".aba");
       if (!btn) return;
+      vibrarLeve(10);
       setorCalendario = btn.dataset.setor;
       document.querySelectorAll(".aba").forEach((b) => b.classList.toggle("ativa", b === btn));
+      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
       montarCalendario();
       montarTopDias();
     };
@@ -310,12 +362,12 @@
       .sort((a, b) => b.valor - a.valor);
   }
 
-  /** Cor do "termômetro" Black-on-Black: preto carbono/verde sutil (base) → rubro escuro (médio) → vermelho vivo Black Friday (pico). */
+  /** Cor do "termômetro" Black-on-Black: preto esmeralda (base) → rubro escuro (médio) → vermelho vivo Black Friday (pico). */
   function corCalor(t) {
     const paradas = [
-      [12, 24, 19],    // Preto esmeralda profundo (ritmo base)
-      [68, 12, 18],    // Rubro negro intermediário
-      [210, 16, 34],   // Vermelho Black Friday intenso (pico)
+      [12, 26, 20],    // Preto esmeralda profundo (ritmo base)
+      [74, 12, 19],    // Rubro negro intermediário
+      [218, 18, 36],   // Vermelho Black Friday intenso (pico)
     ];
     const x = Math.min(Math.max(t, 0), 1) * 2;
     const i = Math.min(Math.floor(x), 1);
@@ -344,32 +396,39 @@
       const classes = ["dia"];
       if (!v) classes.push("sem-meta");
       if (dia === hoje) classes.push("hoje");
+      if (top3.has(dia)) classes.push("pico-top3");
       if (dia === diaSelecionado) classes.push("selecionado");
-      const estilo = v ? `background:${corCalor(norm(v))}` : "";
+      const estilo = v ? `background:${corCalor(norm(v))};` : "";
       html += `
-        <div class="${classes.join(" ")}" style="${estilo}" data-dia="${dia}" title="Dia ${dia}: ${brl.format(v)}">
+        <div class="${classes.join(" ")}" style="--dia-delay:${i * 12}ms;${estilo}" data-dia="${dia}" title="Dia ${dia}: ${brl.format(v)}">
           <div class="dia-topo">
             <span class="num">${String(dia).padStart(2, "0")}</span>
             ${top3.has(dia) ? '<span class="fogo" title="Top 3 do mês">PICO</span>' : ""}
           </div>
-          <span class="val">${v ? brlCompacto.format(v) : "—"}</span>
+          <span class="val val-desktop">${v ? brlCompacto.format(v) : "—"}</span>
+          <span class="val val-mobile">${fmtCalCurto(v)}</span>
         </div>`;
     });
     $("dias").innerHTML = html;
     $("dias").onclick = (e) => {
       const el = e.target.closest(".dia[data-dia]");
-      if (el) selecionarDia(Number(el.dataset.dia));
+      if (el) {
+        vibrarLeve(10);
+        selecionarDia(Number(el.dataset.dia), true);
+      }
     };
-    atualizarTermometro();
+    atualizarTermometro(false);
   }
 
-  function selecionarDia(dia) {
-    diaSelecionado = dia;
-    document.querySelectorAll(".dia[data-dia]").forEach((el) => el.classList.toggle("selecionado", Number(el.dataset.dia) === dia));
-    atualizarTermometro();
+  function selecionarDia(dia, animarPulso = false) {
+    const diaClamp = Math.max(1, Math.min(DADOS.diasNoMes, dia));
+    if (diaClamp === diaSelecionado && !animarPulso) return;
+    diaSelecionado = diaClamp;
+    document.querySelectorAll(".dia[data-dia]").forEach((el) => el.classList.toggle("selecionado", Number(el.dataset.dia) === diaSelecionado));
+    atualizarTermometro(animarPulso);
   }
 
-  function atualizarTermometro() {
+  function atualizarTermometro(animarPulso = false) {
     const setor = setorCalendario;
     const valor = lojaAtual.diario[setor][diaSelecionado - 1] || 0;
     const { min, max, norm } = escala(setor);
@@ -377,12 +436,12 @@
 
     $("termo-max").textContent = brlCompacto.format(max);
     $("termo-min").textContent = brlCompacto.format(min);
-    // altura mínima de 8% para o tubo nunca ficar "vazio" num dia com meta
     $("termo-fill").style.height = `${valor ? 8 + t * 92 : 0}%`;
+    $("termo-fill").style.width = `${valor ? 8 + t * 92 : 0}%`;
     document.querySelector(".bulbo").style.background = valor ? corCalor(t) : "var(--bg2)";
 
     const data = new Date(DADOS.ano, DADOS.mes - 1, diaSelecionado);
-    $("detalhe-data").textContent = `${SEMANA[data.getDay()]}, ${diaSelecionado} de ${DADOS.mesNome.toLowerCase()}`;
+    $("detalhe-data").textContent = `${SEMANA[data.getDay()]}, ${String(diaSelecionado).padStart(2, "0")}/${String(DADOS.mes).padStart(2, "0")}`;
     $("detalhe-valor").textContent = brl.format(valor);
 
     const posicao = rankDias(setor).findIndex((d) => d.dia === diaSelecionado) + 1;
@@ -398,6 +457,18 @@
             .map((k) => `<li><span><i class="dot-setor" style="background:${SETOR_INFO[k].cor}"></i>${SETOR_INFO[k].rotulo}</span><span class="mono">${brl.format(lojaAtual.diario[k][diaSelecionado - 1] || 0)}</span></li>`)
             .join("")
         : "";
+
+    if ($("btn-dia-ant")) $("btn-dia-ant").disabled = diaSelecionado <= 1;
+    if ($("btn-dia-prox")) $("btn-dia-prox").disabled = diaSelecionado >= DADOS.diasNoMes;
+
+    if (animarPulso) {
+      const painel = $("painel-detalhe-dia");
+      if (painel) {
+        painel.classList.remove("pulso-troca");
+        void painel.offsetWidth;
+        painel.classList.add("pulso-troca");
+      }
+    }
   }
 
   function montarTopDias() {
@@ -406,10 +477,10 @@
       .map((d, i) => {
         const data = new Date(DADOS.ano, DADOS.mes - 1, d.dia);
         return `
-          <article class="card top-dia" data-dia="${d.dia}">
+          <article class="card top-dia reveal-card" style="--stagger:${i * 65}ms" data-dia="${d.dia}">
             <span class="pos">${i + 1}º</span>
             <div>
-              <strong>${d.dia}/${String(DADOS.mes).padStart(2, "0")} · ${SEMANA[data.getDay()]}</strong>
+              <strong>${String(d.dia).padStart(2, "0")}/${String(DADOS.mes).padStart(2, "0")} · ${SEMANA[data.getDay()]}</strong>
               <small>${brl.format(d.valor)}</small>
             </div>
           </article>`;
@@ -418,9 +489,134 @@
     $("top-dias").onclick = (e) => {
       const el = e.target.closest(".top-dia");
       if (!el) return;
-      selecionarDia(Number(el.dataset.dia));
+      vibrarLeve(15);
+      selecionarDia(Number(el.dataset.dia), true);
       document.querySelector(".calendario-card").scrollIntoView({ behavior: "smooth", block: "center" });
     };
+  }
+
+  // ---------------- animações de scroll, gestos touch e barra mobile ----------------
+  function ativarRevealAoRolar() {
+    const itens = document.querySelectorAll(".reveal-on-scroll, .reveal-card");
+    if (!("IntersectionObserver" in window)) {
+      itens.forEach((el) => el.classList.add("visivel"));
+      return;
+    }
+    if (!scrollObserver) {
+      scrollObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("visivel");
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -25px 0px" }
+      );
+    }
+    itens.forEach((el) => scrollObserver.observe(el));
+  }
+
+  function iniciarInteracoesMobile() {
+    // 1. Botões Anterior / Próximo dia no painel de detalhes
+    if ($("btn-dia-ant")) {
+      $("btn-dia-ant").addEventListener("click", () => {
+        if (diaSelecionado > 1) {
+          vibrarLeve(10);
+          selecionarDia(diaSelecionado - 1, true);
+        }
+      });
+    }
+    if ($("btn-dia-prox")) {
+      $("btn-dia-prox").addEventListener("click", () => {
+        if (diaSelecionado < DADOS.diasNoMes) {
+          vibrarLeve(10);
+          selecionarDia(diaSelecionado + 1, true);
+        }
+      });
+    }
+
+    // 2. Gesto de Swipe (deslizar o dedo para esquerda/direita) no card de detalhes do dia
+    const painelDetalhe = $("painel-detalhe-dia");
+    if (painelDetalhe) {
+      let touchX0 = 0;
+      let touchY0 = 0;
+      painelDetalhe.addEventListener(
+        "touchstart",
+        (e) => {
+          if (e.touches.length === 1) {
+            touchX0 = e.touches[0].clientX;
+            touchY0 = e.touches[0].clientY;
+          }
+        },
+        { passive: true }
+      );
+      painelDetalhe.addEventListener(
+        "touchend",
+        (e) => {
+          if (!e.changedTouches.length) return;
+          const dx = e.changedTouches[0].clientX - touchX0;
+          const dy = e.changedTouches[0].clientY - touchY0;
+          if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+            vibrarLeve(12);
+            if (dx < 0 && diaSelecionado < DADOS.diasNoMes) {
+              selecionarDia(diaSelecionado + 1, true);
+            } else if (dx > 0 && diaSelecionado > 1) {
+              selecionarDia(diaSelecionado - 1, true);
+            }
+          }
+        },
+        { passive: true }
+      );
+    }
+
+    // 3. Barra de progresso de leitura no topo + destaque da seção na barra inferior mobile
+    const barraTopo = $("barra-scroll-topo");
+    const botoesNav = document.querySelectorAll(".nav-mobile-btn");
+    const secoesIds = ["secao-hero", "secao-setores", "secao-calendario", "secao-top"];
+
+    botoesNav.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const alvoId = btn.dataset.alvo;
+        const el = $(alvoId);
+        if (!el) return;
+        vibrarLeve(12);
+        botoesNav.forEach((b) => b.classList.toggle("ativo", b === btn));
+        const yOffset = -78;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+      });
+    });
+
+    let ticking = false;
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const scrollTop = window.scrollY || document.documentElement.scrollTop;
+          const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+          const progresso = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+          if (barraTopo) barraTopo.style.width = `${progresso}%`;
+
+          // Atualiza botão ativo na barra inferior conforme rolagem
+          let secaoAtiva = secoesIds[0];
+          for (const id of secoesIds) {
+            const el = $(id);
+            if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.38) {
+              secaoAtiva = id;
+            }
+          }
+          if (window.innerHeight + scrollTop >= document.documentElement.scrollHeight - 40) {
+            secaoAtiva = "secao-top";
+          }
+          botoesNav.forEach((b) => b.classList.toggle("ativo", b.dataset.alvo === secaoAtiva));
+          ticking = false;
+        });
+      },
+      { passive: true }
+    );
   }
 
   // ---------------- início ----------------
@@ -429,10 +625,10 @@
     return;
   }
   iniciarLogin();
+  iniciarInteracoesMobile();
   const salva = JSON.parse(localStorage.getItem(CHAVE_SESSAO) || "null");
   if (salva) {
     if (salva.nome) localStorage.setItem(CHAVE_NOME, salva.nome);
     entrar(salva);
   }
 })();
-
