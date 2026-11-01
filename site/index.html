@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meta Lojas — Painel de Metas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ============ LOGIN ============ -->
+  <section id="tela-login" class="tela ativa">
+    <div class="login-card">
+      <div class="login-topo-barra"></div>
+      <div class="logo">
+        <span class="logo-marca"></span>
+        <span>META<b>LOJAS</b></span>
+        <span class="logo-tag">ÁGUIA DO CERRADO</span>
+      </div>
+      <h1>Acesso da Loja</h1>
+      <p class="sub">Regional <b>Águia do Cerrado</b> (Romulo Farias) — selecione sua unidade para consultar as metas.</p>
+
+      <form id="form-login" autocomplete="off">
+        <label for="campo-loja">Unidade / Loja (Águia do Cerrado)</label>
+        <input id="campo-loja" list="lista-lojas" placeholder="Digite o código (ex: 23, 25, 99) ou escolha na lista" required />
+        <datalist id="lista-lojas"></datalist>
+
+        <label for="campo-nome">Seu nome</label>
+        <input id="campo-nome" placeholder="Como devemos te chamar?" maxlength="40" required />
+
+        <p id="erro-login" class="erro" hidden></p>
+        <button type="submit" class="btn-primario">Acessar Painel →</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ CARREGAMENTO (ARENA BLACK FRIDAY) ============ -->
+  <section id="tela-carregando" class="tela">
+    <div class="bf-arena-bg">
+      <div class="bf-stripe s1"></div>
+      <div class="bf-stripe s2"></div>
+      <div class="bf-stripe s3"></div>
+    </div>
+
+    <div class="carregando">
+      <div class="bf-badge-topo">
+        <span class="bf-ponto-vivo"></span>
+        <span>OPERAÇÃO NOVEMBRO • ALTA PERFORMANCE</span>
+      </div>
+
+      <div class="bf-marca-bloco">
+        <span class="bf-chevrons">///</span>
+        <span class="bf-titulo-evento">BLACK <b>FRIDAY</b></span>
+        <span class="bf-ano-tag">2026</span>
+      </div>
+
+      <p class="rotulo-carregando">CONVOCAÇÃO OFICIAL • PREPARA O JOGO</p>
+      <h1 class="bf-boas-vindas">ENTRA EM CAMPO, <span id="boas-vindas-nome"></span>!</h1>
+
+      <div class="bf-placar-loja">
+        <div class="bf-placar-item principal">
+          <span class="bf-placar-rotulo">UNIDADE ESCALADA</span>
+          <strong id="boas-vindas-loja"></strong>
+          <small id="boas-vindas-regional"></small>
+        </div>
+        <div class="bf-placar-divisor"></div>
+        <div class="bf-placar-item">
+          <span class="bf-placar-rotulo">ALVO DE NOVEMBRO</span>
+          <strong id="boas-vindas-meta" class="bf-cor-verde"></strong>
+          <small id="boas-vindas-pico"></small>
+        </div>
+      </div>
+
+      <div class="bf-setores-aquecimento">
+        <span class="bf-chip-setor" data-step="1">CALÇADOS</span>
+        <span class="bf-chip-setor" data-step="2">AUTOSSERVIÇO</span>
+        <span class="bf-chip-setor" data-step="3">BIKE</span>
+        <span class="bf-chip-setor" data-step="4">OMS DIGITAL</span>
+      </div>
+
+      <div class="bf-progresso-box">
+        <div class="bf-progresso-info">
+          <span id="carregando-status">AQUECENDO A PISTA...</span>
+          <span id="carregando-pct" class="mono">0%</span>
+        </div>
+        <div class="barra">
+          <div class="barra-fill"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="tela-dashboard" class="tela">
+    <header class="topo">
+      <div class="logo pequeno">
+        <span class="logo-marca"></span>
+        <span>META<b>LOJAS</b></span>
+      </div>
+
+      <div class="topo-troca-loja">
+        <label for="seletor-loja-topo" class="rotulo-troca">LOJA:</label>
+        <select id="seletor-loja-topo" class="seletor-loja-topo" title="Trocar de loja rapidamente"></select>
+      </div>
+
+      <div class="topo-info">
+        <span id="topo-ola"></span>
+        <small id="topo-loja"></small>
+      </div>
+      <button id="btn-sair" class="btn-sair" title="Voltar para a tela inicial">Sair</button>
+    </header>
+
+    <main class="conteudo">
+      <!-- Meta do mês + Hoje por setor + Prévia do próximo dia -->
+      <section class="card hero">
+        <div class="hero-topo">
+          <div class="hero-principal">
+            <div class="hero-cabecalho">
+              <span class="badge-mes">OBJETIVO MENSAL</span>
+              <span class="rotulo" id="mes-nome"></span>
+            </div>
+            <p id="meta-mes" class="valor-hero"></p>
+            <p id="meta-regional" class="sub hero-regional"></p>
+          </div>
+
+          <div class="hero-lado">
+            <div class="mini mini-destaque">
+              <p class="rotulo" id="rotulo-hoje">Meta de hoje</p>
+              <p id="meta-hoje" class="valor-mini"></p>
+              <small id="sub-hoje" class="mini-sub"></small>
+            </div>
+            <div class="mini mini-amanha">
+              <p class="rotulo" id="rotulo-amanha">Prévia de amanhã</p>
+              <p id="meta-amanha" class="valor-mini"></p>
+              <small id="sub-amanha" class="mini-sub"></small>
+            </div>
+            <div class="mini">
+              <p class="rotulo">Período / Ritmo</p>
+              <p id="dias-restantes" class="valor-mini"></p>
+              <small id="sub-periodo" class="mini-sub">Dias restantes no mês</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-divisor"></div>
+
+        <div class="hero-desdobramento">
+          <div class="hero-bloco-dia">
+            <div class="hero-bloco-header">
+              <span class="badge-dia hoje-tag">HOJE</span>
+              <span class="rotulo" id="titulo-setores-hoje">META DO DIA POR SETOR</span>
+            </div>
+            <div id="hero-setores-hoje" class="hero-grid-setores-dia"></div>
+          </div>
+
+          <div class="hero-bloco-dia previa">
+            <div class="hero-bloco-header">
+              <span class="badge-dia amanha-tag">PRÓXIMO DIA</span>
+              <span class="rotulo" id="titulo-setores-amanha">PRÉVIA DE AMANHÃ POR SETOR</span>
+            </div>
+            <div id="hero-setores-amanha" class="hero-grid-setores-dia"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metas por setor -->
+      <div class="secao-header">
+        <h2 class="titulo-secao">Distribuição por Setor</h2>
+        <span class="secao-sub">Participação de cada categoria na meta total</span>
+      </div>
+      <section id="setores" class="grid-setores"></section>
+
+      <!-- Calendário + termômetro -->
+      <div class="secao-header">
+        <h2 class="titulo-secao">Mapa Diário de Metas</h2>
+        <span class="secao-sub">Clique em um dia para inspecionar os detalhes por categoria</span>
+      </div>
+      <section class="card calendario-card">
+        <div class="abas" id="abas-calendario"></div>
+
+        <div class="calendario-layout">
+          <div class="calendario">
+            <div class="semana">
+              <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
+            </div>
+            <div id="dias" class="dias"></div>
+            <div class="legenda">
+              <span>Ritmo base (Verde)</span>
+              <div class="legenda-gradiente"></div>
+              <span>Pico de meta (Vermelho)</span>
+            </div>
+          </div>
+
+          <aside class="termometro-area">
+            <div class="termometro">
+              <span id="termo-max" class="termo-label topo-label"></span>
+              <div class="tubo"><div id="termo-fill" class="tubo-fill"></div></div>
+              <div class="bulbo"></div>
+              <span id="termo-min" class="termo-label base-label"></span>
+            </div>
+            <div class="detalhe-dia">
+              <p class="rotulo" id="detalhe-data"></p>
+              <p id="detalhe-valor" class="valor-mini valor-detalhe"></p>
+              <p id="detalhe-rank" class="sub badge-rank"></p>
+              <ul id="detalhe-setores" class="detalhe-setores"></ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Top dias -->
+      <div class="secao-header">
+        <h2 class="titulo-secao">Top 5 Maiores Metas do Mês</h2>
+        <span class="secao-sub">Dias decisivos de maior volume projetado</span>
+      </div>
+      <section id="top-dias" class="top-dias"></section>
+
+      <p id="rodape" class="rodape"></p>
+    </main>
+  </section>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+

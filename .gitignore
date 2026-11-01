@@ -1,0 +1,15 @@
+# Python / Ambiente
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Planilhas brutas e temporários do Excel
+*.xlsx
+~$*.xlsx
+*.tmp
+Thumbs.db
+.DS_Store
+
+# Vercel
+.vercel/
