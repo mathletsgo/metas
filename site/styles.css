@@ -89,14 +89,17 @@ body {
   color: var(--vermelho-vivo);
   margin-left: 1px;
 }
-.logo-marca {
-  width: 14px;
-  height: 22px;
-  border-radius: 3px;
-  background: linear-gradient(180deg, var(--vermelho-vivo) 0%, var(--vermelho) 65%, var(--verde) 100%);
-  box-shadow: 0 0 12px rgba(225, 29, 46, 0.45);
-  transform: skewX(-12deg);
-  display: inline-block;
+.logo-icone-svg {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  box-shadow: 0 0 14px rgba(225, 29, 46, 0.35);
+  display: block;
+}
+.logo.pequeno .logo-icone-svg {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
 }
 .logo-tag {
   margin-left: auto;

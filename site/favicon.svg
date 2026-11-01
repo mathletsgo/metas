@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="20" y1="16" x2="108" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff2a3c"/>
+      <stop offset="100%" stop-color="#c81020"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="24" y1="72" x2="104" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fundo Black-on-Black com borda esportiva -->
+  <rect x="4" y="4" width="120" height="120" rx="28" fill="url(#bg)" stroke="#262626" stroke-width="4"/>
+  <rect x="8" y="8" width="112" height="112" rx="24" stroke="#ff1f33" stroke-opacity="0.35" stroke-width="1.5"/>
+
+  <!-- Asas estilizadas / Chevrons de Velocidade (Águia + Esporte) -->
+  <path d="M22 44L64 24L106 44L98 60L64 44L30 60L22 44Z" fill="url(#redGrad)"/>
+  <path d="M30 68L64 52L98 68L91 82L64 69L37 82L30 68Z" fill="#ffffff"/>
+
+  <!-- Seta de Meta / Performance em Verde Esmeralda -->
+  <path d="M40 92L64 80L88 92L82 104L64 95L46 104L40 92Z" fill="url(#greenGrad)"/>
+
+  <!-- Ponto focal central -->
+  <circle cx="64" cy="108" r="4" fill="#22c55e"/>
+</svg>
