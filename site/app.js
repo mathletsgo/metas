@@ -230,6 +230,8 @@
     return { desc: "Tempo bom", icon: "🌤️" };
   }
 
+  let previsaoCache = {};
+
   function carregarClimaRegional(loja) {
     const nome = (loja && (loja.nome || "")).toUpperCase();
     let reg = CIDADES_REGIONAL.df;
@@ -244,15 +246,18 @@
     const elDesc = $("clima-desc");
     if (!elTemp) return;
 
-    // Valor prévio de estimativa
     const hora = new Date().getHours();
     const tempEstimada = hora >= 11 && hora <= 16 ? 30 : 25;
     elTemp.textContent = `${tempEstimada}°C`;
     elDesc.textContent = reg.nome;
     if (elIcon) elIcon.textContent = hora >= 6 && hora <= 18 ? "☀️" : "🌙";
 
-    // API pública direta sem chave estática no repositório (Open-Meteo com dados do Inmet/NOAA)
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current_weather=true`)
+    if ($("previsao-titulo-cidade")) {
+      $("previsao-titulo-cidade").textContent = `Previsão: ${reg.nome}`;
+    }
+
+    // Busca clima atual + previsão diária para os próximos 4 dias
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${reg.lat}&longitude=${reg.lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`)
       .then((r) => r.json())
       .then((data) => {
         if (data && data.current_weather) {
@@ -262,10 +267,54 @@
           elDesc.textContent = `${reg.nome} • ${wmo.desc}`;
           if (elIcon) elIcon.textContent = wmo.icon;
         }
+
+        if (data && data.daily && Array.isArray(data.daily.time)) {
+          previsaoCache = {
+            cidade: reg.nome,
+            dias: data.daily.time.slice(0, 5).map((diaStr, idx) => {
+              const dt = new Date(`${diaStr}T12:00:00`);
+              const wmo = climaDescPorWmo(data.daily.weathercode[idx]);
+              return {
+                data: dt,
+                dataFmt: `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}`,
+                diaSemana: SEMANA[dt.getDay()],
+                max: Math.round(data.daily.temperature_2m_max[idx]),
+                min: Math.round(data.daily.temperature_2m_min[idx]),
+                desc: wmo.desc,
+                icon: wmo.icon,
+              };
+            }),
+          };
+          renderizarPopoverPrevisao();
+        }
       })
       .catch(() => {
         elDesc.textContent = reg.nome;
       });
+  }
+
+  function renderizarPopoverPrevisao() {
+    const lista = $("lista-previsao-dias");
+    if (!lista || !previsaoCache.dias) return;
+
+    const diasExibir = previsaoCache.dias.slice(1, 5);
+    lista.innerHTML = diasExibir
+      .map((d) => `
+        <div class="item-previsao-dia">
+          <div class="previsao-dia-info">
+            <span class="previsao-dia-icone">${d.icon}</span>
+            <div class="previsao-dia-titulos">
+              <span class="previsao-dia-nome">${d.diaSemana} · <small style="color:var(--texto2);font-weight:400">${d.dataFmt}</small></span>
+              <span class="previsao-dia-desc">${d.desc}</span>
+            </div>
+          </div>
+          <div class="previsao-dia-temps">
+            <span class="temp-max" title="Máxima">▲ ${d.max}°</span>
+            <span class="temp-min" title="Mínima">▼ ${d.min}°</span>
+          </div>
+        </div>
+      `)
+      .join("");
   }
 
   // ---------------- dashboard ----------------
@@ -630,7 +679,38 @@
       );
     }
 
-    // 3. Barra de progresso de leitura no topo + destaque da seção na barra inferior mobile
+    // 3. Clique no widget de clima para abrir/fechar a previsão dos próximos 4 dias
+    const btnClima = $("topo-clima");
+    const popoverPrevisao = $("popover-previsao");
+    const btnFecharPrevisao = $("btn-fechar-previsao");
+
+    if (btnClima && popoverPrevisao) {
+      btnClima.addEventListener("click", (e) => {
+        e.stopPropagation();
+        vibrarLeve(10);
+        const estaAberto = !popoverPrevisao.hidden;
+        popoverPrevisao.hidden = estaAberto;
+        btnClima.classList.toggle("aberto", !estaAberto);
+      });
+
+      if (btnFecharPrevisao) {
+        btnFecharPrevisao.addEventListener("click", (e) => {
+          e.stopPropagation();
+          vibrarLeve(8);
+          popoverPrevisao.hidden = true;
+          btnClima.classList.remove("aberto");
+        });
+      }
+
+      document.addEventListener("click", (e) => {
+        if (!popoverPrevisao.hidden && !popoverPrevisao.contains(e.target) && !btnClima.contains(e.target)) {
+          popoverPrevisao.hidden = true;
+          btnClima.classList.remove("aberto");
+        }
+      });
+    }
+
+    // 4. Barra de progresso de leitura no topo + destaque da seção na barra inferior mobile
     const barraTopo = $("barra-scroll-topo");
     const botoesNav = document.querySelectorAll(".nav-mobile-btn");
     const secoesIds = ["secao-calendario", "secao-hero", "secao-setores", "secao-top"];

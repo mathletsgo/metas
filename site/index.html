@@ -116,13 +116,26 @@
         <select id="seletor-loja-topo" class="seletor-loja-topo" title="Trocar de loja rapidamente"></select>
       </div>
 
-      <!-- Clima simples no topo da regional -->
-      <div id="topo-clima" class="topo-clima" title="Temperatura e clima da regional">
+      <!-- Clima simples no topo da regional (clicável para previsão de 4 dias) -->
+      <div id="topo-clima" class="topo-clima" title="Clique para ver a previsão dos próximos 4 dias">
         <span id="clima-icone" class="clima-icone">☀️</span>
         <div class="clima-dados">
           <span id="clima-temp" class="clima-temp">--°C</span>
           <small id="clima-desc" class="clima-desc">Cerrado</small>
         </div>
+        <span class="clima-seta">▼</span>
+      </div>
+
+      <!-- Popover de Previsão 4 Dias -->
+      <div id="popover-previsao" class="popover-previsao" hidden>
+        <div class="popover-clima-header">
+          <div>
+            <strong id="previsao-titulo-cidade">Previsão do Tempo</strong>
+            <small>Próximos 4 dias na região</small>
+          </div>
+          <button type="button" id="btn-fechar-previsao" class="btn-fechar-previsao" aria-label="Fechar">✕</button>
+        </div>
+        <div id="lista-previsao-dias" class="lista-previsao-dias"></div>
       </div>
 
       <div class="topo-info">
