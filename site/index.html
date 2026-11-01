@@ -124,6 +124,49 @@
     </header>
 
     <main class="conteudo">
+      <!-- Calendário + termômetro (Subiu para o topo do site) -->
+      <div id="secao-calendario" class="secao-header reveal-on-scroll">
+        <h2 class="titulo-secao">Mapa Diário de Metas</h2>
+        <span class="secao-sub">Toque ou deslize o dedo pelos dias para inspecionar</span>
+      </div>
+      <section class="card calendario-card reveal-on-scroll">
+        <div class="abas" id="abas-calendario"></div>
+
+        <div class="calendario-layout">
+          <div class="calendario">
+            <div class="semana">
+              <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
+            </div>
+            <div id="dias" class="dias"></div>
+            <div class="legenda">
+              <span>Base (Verde)</span>
+              <div class="legenda-gradiente"></div>
+              <span>Pico (Vermelho)</span>
+            </div>
+          </div>
+
+          <aside id="painel-detalhe-dia" class="termometro-area">
+            <div class="termometro">
+              <span id="termo-max" class="termo-label topo-label"></span>
+              <div class="tubo"><div id="termo-fill" class="tubo-fill"></div></div>
+              <div class="bulbo"></div>
+              <span id="termo-min" class="termo-label base-label"></span>
+            </div>
+            <div class="detalhe-dia">
+              <div class="detalhe-navegacao">
+                <button type="button" id="btn-dia-ant" class="btn-nav-dia" aria-label="Dia anterior">‹ Ant</button>
+                <p class="rotulo" id="detalhe-data"></p>
+                <button type="button" id="btn-dia-prox" class="btn-nav-dia" aria-label="Próximo dia">Próx ›</button>
+              </div>
+              <p id="detalhe-valor" class="valor-mini valor-detalhe"></p>
+              <p id="detalhe-rank" class="sub badge-rank"></p>
+              <ul id="detalhe-setores" class="detalhe-setores"></ul>
+              <span class="dica-swipe-mobile">↔ Deslize para trocar de dia</span>
+            </div>
+          </aside>
+        </div>
+      </section>
+
       <!-- Meta do mês + Hoje por setor + Prévia do próximo dia -->
       <section id="secao-hero" class="card hero reveal-on-scroll">
         <div class="hero-topo">
@@ -176,55 +219,12 @@
         </div>
       </section>
 
-      <!-- Metas por setor -->
+      <!-- Metas por setor (junto com Objetivo Mensal) -->
       <div id="secao-setores" class="secao-header reveal-on-scroll">
         <h2 class="titulo-secao">Distribuição por Setor</h2>
         <span class="secao-sub">Toque em um setor para filtrar o calendário</span>
       </div>
       <section id="setores" class="grid-setores reveal-on-scroll"></section>
-
-      <!-- Calendário + termômetro -->
-      <div id="secao-calendario" class="secao-header reveal-on-scroll">
-        <h2 class="titulo-secao">Mapa Diário de Metas</h2>
-        <span class="secao-sub">Toque ou deslize o dedo pelos dias para inspecionar</span>
-      </div>
-      <section class="card calendario-card reveal-on-scroll">
-        <div class="abas" id="abas-calendario"></div>
-
-        <div class="calendario-layout">
-          <div class="calendario">
-            <div class="semana">
-              <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
-            </div>
-            <div id="dias" class="dias"></div>
-            <div class="legenda">
-              <span>Base (Verde)</span>
-              <div class="legenda-gradiente"></div>
-              <span>Pico (Vermelho)</span>
-            </div>
-          </div>
-
-          <aside id="painel-detalhe-dia" class="termometro-area">
-            <div class="termometro">
-              <span id="termo-max" class="termo-label topo-label"></span>
-              <div class="tubo"><div id="termo-fill" class="tubo-fill"></div></div>
-              <div class="bulbo"></div>
-              <span id="termo-min" class="termo-label base-label"></span>
-            </div>
-            <div class="detalhe-dia">
-              <div class="detalhe-navegacao">
-                <button type="button" id="btn-dia-ant" class="btn-nav-dia" aria-label="Dia anterior">‹ Ant</button>
-                <p class="rotulo" id="detalhe-data"></p>
-                <button type="button" id="btn-dia-prox" class="btn-nav-dia" aria-label="Próximo dia">Próx ›</button>
-              </div>
-              <p id="detalhe-valor" class="valor-mini valor-detalhe"></p>
-              <p id="detalhe-rank" class="sub badge-rank"></p>
-              <ul id="detalhe-setores" class="detalhe-setores"></ul>
-              <span class="dica-swipe-mobile">↔ Deslize para trocar de dia</span>
-            </div>
-          </aside>
-        </div>
-      </section>
 
       <!-- Top dias -->
       <div id="secao-top" class="secao-header reveal-on-scroll">
@@ -238,17 +238,17 @@
 
     <!-- Barra de navegação inferior exclusiva Mobile (Thumb Zone) -->
     <nav class="nav-mobile" aria-label="Navegação rápida mobile">
-      <button type="button" class="nav-mobile-btn ativo" data-alvo="secao-hero">
+      <button type="button" class="nav-mobile-btn ativo" data-alvo="secao-calendario">
+        <span class="nav-icone">📅</span>
+        <span>Calendário</span>
+      </button>
+      <button type="button" class="nav-mobile-btn" data-alvo="secao-hero">
         <span class="nav-icone">🎯</span>
         <span>Hoje</span>
       </button>
       <button type="button" class="nav-mobile-btn" data-alvo="secao-setores">
         <span class="nav-icone">⚡</span>
         <span>Setores</span>
-      </button>
-      <button type="button" class="nav-mobile-btn" data-alvo="secao-calendario">
-        <span class="nav-icone">📅</span>
-        <span>Calendário</span>
       </button>
       <button type="button" class="nav-mobile-btn" data-alvo="secao-top">
         <span class="nav-icone">🔥</span>

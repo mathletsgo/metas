@@ -573,7 +573,7 @@
     // 3. Barra de progresso de leitura no topo + destaque da seção na barra inferior mobile
     const barraTopo = $("barra-scroll-topo");
     const botoesNav = document.querySelectorAll(".nav-mobile-btn");
-    const secoesIds = ["secao-hero", "secao-setores", "secao-calendario", "secao-top"];
+    const secoesIds = ["secao-calendario", "secao-hero", "secao-setores", "secao-top"];
 
     botoesNav.forEach((btn) => {
       btn.addEventListener("click", () => {
